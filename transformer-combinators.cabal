@@ -1,0 +1,25 @@
+Name:           transformer-combinators
+Version:        0.0
+
+License:        GPL
+License-file:	gpl-2.0.txt
+Author:         Johannes Waldmann
+Maintainer:	Johannes Waldmann
+Synopsis:       combinators for transformers
+description:	combinators for transformers. 
+   typical application: use these combinators to 
+   build a termination prover 
+   by sequential and parallel combination
+   of basic transformers
+   (like a matrix interpretation solver 
+   that removes some rules)   
+Category:	Algorithms
+Cabal-version: >= 1.2
+Build-type: Simple
+
+Library
+    build-depends: base == 4.*
+    exposed-modules: 
+
+	
+
