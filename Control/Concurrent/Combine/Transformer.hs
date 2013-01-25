@@ -1,35 +1,29 @@
-{-# language ExistentialQuantification #-}
-
 module Control.Concurrent.Combine.Transformer where
 
-import Control.Monad ( guard, when )
+import Control.Concurrent.Combine.Action (Action)
+import qualified Control.Concurrent.Combine.Action as A
 
-type Action a b = a -> IO (Maybe b) 
+type Continuation out a = a -> Action out
 
-bind f g = \ x -> do
-    my <- f x
-    case my of
-        Nothing -> return Nothing
-        Just y -> g y
+newtype CPS out a = 
+    CPS { unCPS :: Continuation out a -> Action out }
 
-efmap f a = \ x -> fmap (fmap f) (a x)
+type Transformer a b c = a -> CPS c b
 
-lift f = return . return . f
+run :: CPS b b -> IO (Maybe b)
+run c = A.run $ unCPS c return
 
-data Transformer a a' b' b = 
-    Transformer { inside :: Action a a'
-                , outside :: Action b' b 
-                }
+instance Monad (CPS out) where
+    fail msg = CPS $ \ k -> fail msg
+    return x = CPS $ \ k -> k x
+    CPS c >>= f = CPS $ \ k -> 
+           c $ \ x -> unCPS (f x) $ k
 
-transform i o = 
-    Transformer { inside = i, outside = o }
+orelse :: CPS out a -> CPS out a -> CPS out a   
+orelse a b = CPS $ \ k -> 
+    ( A.orelse (unCPS a k) (unCPS b k) ) 
 
-run :: Transformer a1 b' b' a -> a1 -> IO (Maybe a)
-run t = inside t `bind` outside t 
+parallel :: [CPS out a] -> CPS out a
+parallel cs = CPS $ \ k ->
+    ( A.parallel $ map (\ c -> unCPS c k) cs)
 
-assert :: (a' -> Bool) -> Transformer a' a' b b
-assert pred = transform
-    ( \ x -> return $ guard (pred x) >> return x ) 
-    ( lift id )
-
-fail = assert (const False)

@@ -18,8 +18,10 @@ Cabal-version: >= 1.2
 Build-type: Simple
 
 Library
-    build-depends: base == 4.*
+    build-depends: base == 4.* , async, stm
     exposed-modules: 
-
+           Control.Concurrent.Combine.Action
+           Control.Concurrent.Combine.Transformer 
+           Control.Concurrent.Combine
 	
 
