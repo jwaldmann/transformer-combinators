@@ -3,27 +3,21 @@ module Control.Concurrent.Combine.Transformer where
 import Control.Concurrent.Combine.Action (Action)
 import qualified Control.Concurrent.Combine.Action as A
 
-type Continuation out a = a -> Action out
+type Computer a b = a -> Action b
 
-newtype CPS out a = 
-    CPS { unCPS :: Continuation out a -> Action out }
+andthen :: Computer a b -> Computer b c 
+        -> Computer a c
+andthen f g = \ x -> f x >>= g
 
-type Transformer a b c = a -> CPS c b
+orelse :: Computer a b -> Computer a b
+       -> Computer a b
+orelse f g = \ x -> A.orelse (f x) (g x)
 
-run :: CPS b b -> IO (Maybe b)
-run c = A.run $ unCPS c return
+parallel :: [ Computer a b ] -> Computer a b
+parallel fs = 
+   \ x -> A.parallel $ map ( \ f -> f x ) fs
 
-instance Monad (CPS out) where
-    fail msg = CPS $ \ k -> fail msg
-    return x = CPS $ \ k -> k x
-    CPS c >>= f = CPS $ \ k -> 
-           c $ \ x -> unCPS (f x) $ k
-
-orelse :: CPS out a -> CPS out a -> CPS out a   
-orelse a b = CPS $ \ k -> 
-    ( A.orelse (unCPS a k) (unCPS b k) ) 
-
-parallel :: [CPS out a] -> CPS out a
-parallel cs = CPS $ \ k ->
-    ( A.parallel $ map (\ c -> unCPS c k) cs)
+sequential :: [ Computer a b ] -> Computer a b
+sequential fs = \ x -> foldr A.orelse (fail "seq") 
+           $ map ( \ f -> f x ) fs
 
