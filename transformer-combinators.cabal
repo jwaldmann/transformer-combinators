@@ -21,7 +21,8 @@ Library
     build-depends: base == 4.* , async, stm
     exposed-modules: 
            Control.Concurrent.Combine.Action
-           Control.Concurrent.Combine.Transformer 
+           Control.Concurrent.Combine.Computer
+           Control.Concurrent.Combine.Lifter
            Control.Concurrent.Combine
 	
 

@@ -1,7 +1,11 @@
-module Control.Concurrent.Combine where
+module Control.Concurrent.Combine 
 
-import qualified 
-       Control.Concurrent.Combine.Transformer  as T
-import qualified 
-       Control.Concurrent.Combine.Action as A
+( module Control.Concurrent.Combine.Lifter
+)
+
+where
+
+import Control.Concurrent.Combine.Lifter
+
+
 
