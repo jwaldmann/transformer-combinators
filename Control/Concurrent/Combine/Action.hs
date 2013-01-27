@@ -3,6 +3,7 @@ module Control.Concurrent.Combine.Action where
 import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Monad ( MonadPlus (..), forM)
+import Control.Exception ( throwIO )
 
 import System.IO
 
@@ -67,14 +68,21 @@ parallel actions = Action $ do
                return x
             running = do 
                Nothing <- ps ; return ()
-        case good of
-            x : _ -> return $ Just x
-            _ -> case running of
-                [] -> return Nothing
-                _ -> retry
+            bad = do 
+               Just (Left e) <- ps
+               return e
+        case bad of 
+            e : _ -> return $ Left e 
+            [] -> case good of
+                x : _ -> return $ Right $ Just x 
+                [] -> case running of
+                    [] -> return $ Right Nothing
+                    _ -> retry
     -- hPutStrLn stderr "*********** cancel"
     forM as cancel
-    return out
+    case out of
+        Right x -> return x
+        Left  e -> throwIO e
 
 
 
